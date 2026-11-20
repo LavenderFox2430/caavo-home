@@ -1,0 +1,69 @@
+{
+  "title": "Caavo Home",
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Connect to Caavo Home",
+        "description": "Enter the Caavo's private LAN IPv4 address and the API key shown in its on-TV Integration settings. The local HTTP API uses your trusted LAN; it does not encrypt traffic.",
+        "data": {"host": "IPv4 address", "token": "API key"}
+      },
+      "discovery_confirm": {
+        "title": "Connect to {name}",
+        "description": "A Caavo was verified at {host}. Copy its API key from the on-TV Integration settings.",
+        "data": {"token": "API key"}
+      },
+      "reauth_confirm": {
+        "title": "Update the Caavo API key",
+        "description": "The unit at {host} rejected its saved API key. Enter the current key from its on-TV Integration settings.",
+        "data": {"token": "API key"}
+      },
+      "reconfigure": {
+        "title": "Update the Caavo connection",
+        "description": "The address must identify the same Caavo. Leave the API key blank to keep the saved key.",
+        "data": {"host": "IPv4 address", "token": "New API key (optional)"}
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Check the address, trusted-LAN access, and that Caavo Home's local API is running.",
+      "invalid_auth": "The API key was rejected. Copy the current key from the Caavo's Integration settings.",
+      "invalid_host": "Use a private or link-local IPv4 address, without a port, URL, or path.",
+      "identity_mismatch": "This address identifies a different Caavo. Its API key was not sent. Check the address before continuing.",
+      "unsupported_api": "This endpoint does not support Caavo Home API v1. Update the launcher or check its address."
+    },
+    "abort": {
+      "already_configured": "This Caavo is already configured. A newly discovered address is updated only after its device identity matches.",
+      "cannot_connect": "The discovered Caavo could not be reached.",
+      "invalid_host": "This discovery did not contain a supported private IPv4 address.",
+      "invalid_auth": "The discovered endpoint did not allow identification without credentials.",
+      "identity_mismatch": "The discovered address did not match the advertised Caavo identity. No API key was sent.",
+      "unsupported_api": "The discovered service does not support Caavo Home API v1.",
+      "reauth_successful": "The API key was updated.",
+      "reconfigure_successful": "The Caavo connection was updated."
+    }
+  },
+  "entity": {
+    "select": {"input": {"name": "HDMI input"}},
+    "remote": {"remote": {"name": "Remote"}},
+    "button": {
+      "wake": {"name": "Wake Caavo"},
+      "standby": {"name": "Caavo standby"},
+      "restart": {"name": "Restart Caavo"},
+      "launcher": {"name": "Open launcher"},
+      "play_pause": {"name": "Play/pause toggle"},
+      "mute": {"name": "Mute toggle"}
+    },
+    "binary_sensor": {"backend_ready": {"name": "Hardware backend ready"}},
+    "sensor": {
+      "cpu_temperature": {"name": "CPU temperature"},
+      "power_state": {
+        "name": "Caavo power state",
+        "state": {"on": "On", "off": "Standby", "transitioning": "Changing power state", "unknown": "Unknown"}
+      },
+      "input_signal": {
+        "name": "HDMI {port} signal",
+        "state": {"connected": "Connected", "standby": "Standby", "disconnected": "Disconnected", "unknown": "Unknown"}
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.venv/
+.pytest_cache/
+dist/
+evidence/
+private/
+backups/
+.env
+.env.*
+secrets.yaml
+*.key
+*.pem
+*.jks
+*.keystore
+*.log
