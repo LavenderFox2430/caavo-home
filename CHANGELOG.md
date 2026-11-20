@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Discover custom IR commands, onboard macros and activity starts as button entities.
+- Add a theater activity selector, end-activity button, cancel-job button and job status sensor.
+- Refresh library controls automatically; keep stable IDs across renames and make removed controls unavailable.
+- Add the native device-page WebUI link to Theater, plus IP/MAC diagnostics and reported MAC device connections.
+- Refresh device software version and URL metadata, preserving existing integration identities and user names.
+- Read durable job receipts after an uncertain run response without retransmitting commands.
+- Keep older API v1 controls usable when theater support or network metadata is absent.
+- Validate imports and registry calls against Core 2026.11.2; test library changes, partial failures, duplicate labels and timeout handling.
+
 ## 0.1.2
 
 First public release, for Home Assistant Core 2026.11.2 or later.

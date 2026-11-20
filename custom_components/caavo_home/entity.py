@@ -6,12 +6,10 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import CaavoAuthError, CaavoError
-from .const import DOMAIN
-from .coordinator import CaavoCoordinator
+from .coordinator import CaavoCoordinator, device_info
 
 
 class CaavoEntity(CoordinatorEntity[CaavoCoordinator]):
@@ -22,14 +20,7 @@ class CaavoEntity(CoordinatorEntity[CaavoCoordinator]):
     def __init__(self, coordinator: CaavoCoordinator, key: str) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.client.device_id}_{key}"
-        info = coordinator.client.info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, str(coordinator.client.device_id))},
-            name=info.get("name", "Caavo Home"),
-            manufacturer="Caavo",
-            model=info.get("model", "HDRX4"),
-            sw_version=info.get("version"),
-        )
+        self._attr_device_info = device_info(coordinator)
 
     @property
     def available(self) -> bool:
@@ -60,3 +51,25 @@ class CaavoEntity(CoordinatorEntity[CaavoCoordinator]):
             raise HomeAssistantError(message) from err
         if refresh:
             await self.coordinator.async_request_refresh()
+
+
+class CaavoAutomationEntity(CaavoEntity):
+    """Automation state can fail independently of the normal remote."""
+
+    @property
+    def automation(self):
+        return (self.coordinator.data or {}).get("automation", {})
+
+    @property
+    def available(self):
+        return (
+            super().available and (self.coordinator.data or {}).get("automationAvailable") is True
+        )
+
+    @property
+    def can_run(self):
+        return (
+            self.available
+            and not self.automation.get("busy")
+            and not self.automation.get("learning")
+        )

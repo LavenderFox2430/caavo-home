@@ -46,6 +46,11 @@ class DiagnosticsTests(unittest.IsolatedAsyncioTestCase):
                 data={
                     **STATE,
                     "future_credential": "state-secret",
+                    "macAddress": "00:11:22:33:44:66",
+                    "network": {
+                        "interfaces": [{"mac": "00:11:22:33:44:66", "addresses": ["192.168.20.50"]}]
+                    },
+                    "automation": {"buttons": {"private-command": "private waveform"}},
                     "inputs": [
                         {
                             "port": 1,
@@ -71,6 +76,9 @@ class DiagnosticsTests(unittest.IsolatedAsyncioTestCase):
             "state-secret",
             "Private player",
             "input-secret",
+            "00:11:22:33:44:66",
+            "private-command",
+            "private waveform",
             INFO["id"],
         ):
             self.assertNotIn(private, serialized)

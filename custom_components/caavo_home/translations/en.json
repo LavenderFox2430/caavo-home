@@ -6,22 +6,32 @@
       "user": {
         "title": "Connect to Caavo Home",
         "description": "Enter the Caavo's private LAN IPv4 address and the API key shown in its on-TV Integration settings. The local HTTP API uses your trusted LAN; it does not encrypt traffic.",
-        "data": {"host": "IPv4 address", "token": "API key"}
+        "data": {
+          "host": "IPv4 address",
+          "token": "API key"
+        }
       },
       "discovery_confirm": {
         "title": "Connect to {name}",
         "description": "A Caavo was verified at {host}. Copy its API key from the on-TV Integration settings.",
-        "data": {"token": "API key"}
+        "data": {
+          "token": "API key"
+        }
       },
       "reauth_confirm": {
         "title": "Update the Caavo API key",
         "description": "The unit at {host} rejected its saved API key. Enter the current key from its on-TV Integration settings.",
-        "data": {"token": "API key"}
+        "data": {
+          "token": "API key"
+        }
       },
       "reconfigure": {
         "title": "Update the Caavo connection",
         "description": "The address must identify the same Caavo. Leave the API key blank to keep the saved key.",
-        "data": {"host": "IPv4 address", "token": "New API key (optional)"}
+        "data": {
+          "host": "IPv4 address",
+          "token": "New API key (optional)"
+        }
       }
     },
     "error": {
@@ -43,26 +53,80 @@
     }
   },
   "entity": {
-    "select": {"input": {"name": "HDMI input"}},
-    "remote": {"remote": {"name": "Remote"}},
-    "button": {
-      "wake": {"name": "Wake Caavo"},
-      "standby": {"name": "Caavo standby"},
-      "restart": {"name": "Restart Caavo"},
-      "launcher": {"name": "Open launcher"},
-      "play_pause": {"name": "Play/pause toggle"},
-      "mute": {"name": "Mute toggle"}
+    "select": {
+      "input": {
+        "name": "HDMI input"
+      },
+      "activity": {
+        "name": "Theater activity"
+      }
     },
-    "binary_sensor": {"backend_ready": {"name": "Hardware backend ready"}},
+    "remote": {
+      "remote": {
+        "name": "Remote"
+      }
+    },
+    "button": {
+      "wake": {
+        "name": "Wake Caavo"
+      },
+      "standby": {
+        "name": "Caavo standby"
+      },
+      "restart": {
+        "name": "Restart Caavo"
+      },
+      "launcher": {
+        "name": "Open launcher"
+      },
+      "play_pause": {
+        "name": "Play/pause toggle"
+      },
+      "mute": {
+        "name": "Mute toggle"
+      },
+      "stop_activity": {
+        "name": "End theater activity"
+      },
+      "cancel_automation": {
+        "name": "Cancel theater job"
+      }
+    },
+    "binary_sensor": {
+      "backend_ready": {
+        "name": "Hardware backend ready"
+      }
+    },
     "sensor": {
-      "cpu_temperature": {"name": "CPU temperature"},
+      "cpu_temperature": {
+        "name": "CPU temperature"
+      },
       "power_state": {
         "name": "Caavo power state",
-        "state": {"on": "On", "off": "Standby", "transitioning": "Changing power state", "unknown": "Unknown"}
+        "state": {
+          "on": "On",
+          "off": "Standby",
+          "transitioning": "Changing power state",
+          "unknown": "Unknown"
+        }
       },
       "input_signal": {
         "name": "HDMI {port} signal",
-        "state": {"connected": "Connected", "standby": "Standby", "disconnected": "Disconnected", "unknown": "Unknown"}
+        "state": {
+          "connected": "Connected",
+          "standby": "Standby",
+          "disconnected": "Disconnected",
+          "unknown": "Unknown"
+        }
+      },
+      "ip_address": {
+        "name": "IP address"
+      },
+      "mac_address": {
+        "name": "MAC address"
+      },
+      "automation_job": {
+        "name": "Theater job"
       }
     }
   }

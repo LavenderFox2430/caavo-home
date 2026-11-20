@@ -14,6 +14,7 @@ def coordinator(data):
         data=data,
         last_update_success=True,
         client=SimpleNamespace(device_id=INFO["id"], info=INFO),
+        async_add_listener=lambda callback: lambda: None,
     )
 
 
@@ -64,7 +65,9 @@ class TemperatureTests(unittest.TestCase):
 class TemperatureSetupTests(unittest.IsolatedAsyncioTestCase):
     async def test_sensor_is_registered_without_extra_api_calls(self):
         entities = []
-        entry = SimpleNamespace(runtime_data=coordinator(dict(STATE)))
+        entry = SimpleNamespace(
+            runtime_data=coordinator(dict(STATE)), async_on_unload=lambda callback: None
+        )
         await sensor_module.async_setup_entry(None, entry, entities.extend)
         temperatures = [
             entity

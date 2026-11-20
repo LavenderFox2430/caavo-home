@@ -31,6 +31,14 @@ METHOD_ARGUMENTS = {
         "__init__": {"config_entry", "name", "update_interval", "always_update"},
         "async_config_entry_first_refresh": set(),
         "async_request_refresh": set(),
+        "async_add_listener": {"update_callback"},
+    },
+    "homeassistant.helpers.device_registry": {
+        "async_get_device": {"identifiers"},
+        "async_update_device": {"configuration_url", "sw_version", "merge_connections"},
+    },
+    "homeassistant.helpers.entity_registry": {
+        "async_update_entity": {"original_name"},
     },
 }
 ENUM_MEMBERS = {

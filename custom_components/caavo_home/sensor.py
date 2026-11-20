@@ -4,9 +4,10 @@ from math import isfinite
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.const import EntityCategory, UnitOfTemperature
+from homeassistant.core import callback
 
 from .const import POWER_STATES, SIGNAL_STATES
-from .entity import CaavoEntity
+from .entity import CaavoAutomationEntity, CaavoEntity
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -15,9 +16,67 @@ async def async_setup_entry(hass, entry, async_add_entities):
         [
             CaavoPowerSensor(coordinator),
             CaavoTemperatureSensor(coordinator),
+            CaavoAddressSensor(coordinator, "ip_address"),
+            CaavoAddressSensor(coordinator, "mac_address"),
             *(CaavoSignalSensor(coordinator, port) for port in range(1, 5)),
         ]
     )
+    added = False
+
+    @callback
+    def discover():
+        nonlocal added
+        if not added and (coordinator.data or {}).get("automationAvailable"):
+            added = True
+            async_add_entities([CaavoJobSensor(coordinator)])
+
+    discover()
+    entry.async_on_unload(coordinator.async_add_listener(discover))
+
+
+class CaavoAddressSensor(CaavoEntity, SensorEntity):
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:network-outline"
+
+    def __init__(self, coordinator, kind):
+        super().__init__(coordinator, kind)
+        self._kind = kind
+        self._attr_translation_key = kind
+
+    @property
+    def available(self):
+        return self.coordinator.last_update_success and self.native_value is not None
+
+    @property
+    def native_value(self):
+        if self._kind == "ip_address":
+            return self.coordinator.client.host
+        return (self.coordinator.data or {}).get("macAddress")
+
+
+class CaavoJobSensor(CaavoAutomationEntity, SensorEntity):
+    _attr_translation_key = "automation_job"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:progress-clock"
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "automation_job")
+
+    @property
+    def native_value(self):
+        return (self.automation.get("job") or {}).get("status", "idle")
+
+    @property
+    def extra_state_attributes(self):
+        job = self.automation.get("job") or {}
+        return {
+            "request_id": job.get("requestId"),
+            "completed_steps": job.get("nextStep"),
+            "total_steps": job.get("stepCount"),
+            "library_revision": self.automation.get("revision"),
+            "activity_state": self.automation.get("activityState", "unknown"),
+            "last_submitted_request": self.coordinator.client.last_automation_request,
+        }
 
 
 class CaavoPowerSensor(CaavoEntity, SensorEntity):

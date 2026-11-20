@@ -122,8 +122,14 @@ class FlowAbort(Exception):
     pass
 
 
+_ha_doubles = None
+
+
 def install_ha_doubles():
     """Only APIs used by flow and pure coordinator/entity logic are simulated."""
+    global _ha_doubles
+    if _ha_doubles is not None:
+        return _ha_doubles
 
     def module(name, **attributes):
         result = sys.modules.setdefault(name, ModuleType(name))
@@ -179,6 +185,7 @@ def install_ha_doubles():
         def __init__(self, *args, **kwargs):
             self.data = None
             self.last_update_success = True
+            self.hass = args[0] if args else None
 
     class CoordinatorEntity:
         @classmethod
@@ -192,6 +199,9 @@ def install_ha_doubles():
         def available(self):
             return self.coordinator.last_update_success
 
+        def _handle_coordinator_update(self):
+            pass
+
     class HomeAssistantError(Exception):
         pass
 
@@ -204,7 +214,7 @@ def install_ha_doubles():
     module("homeassistant")
     entries = module("homeassistant.config_entries", ConfigFlow=ConfigFlow, ConfigEntry=object)
     sys.modules["homeassistant"].config_entries = entries
-    module("homeassistant.core", HomeAssistant=object)
+    module("homeassistant.core", HomeAssistant=object, callback=lambda function: function)
     module(
         "homeassistant.const",
         CONF_HOST="host",
@@ -217,6 +227,8 @@ def install_ha_doubles():
     # Keeping this module empty catches the removed import that broke 0.1.0.
     module("homeassistant.components.zeroconf")
     module("homeassistant.components.remote", RemoteEntity=type("RemoteEntity", (), {}))
+    module("homeassistant.components.button", ButtonEntity=type("ButtonEntity", (), {}))
+    module("homeassistant.components.select", SelectEntity=type("SelectEntity", (), {}))
     module(
         "homeassistant.components.sensor",
         SensorEntity=type("SensorEntity", (), {}),
@@ -235,7 +247,13 @@ def install_ha_doubles():
         TextSelectorConfig=dict,
         TextSelectorType=SimpleNamespace(PASSWORD="password"),
     )
-    module("homeassistant.helpers.device_registry", DeviceInfo=dict)
+    module(
+        "homeassistant.helpers.device_registry",
+        DeviceInfo=dict,
+        CONNECTION_NETWORK_MAC="mac",
+        async_get=lambda hass: hass.devices,
+    )
+    module("homeassistant.helpers.entity_registry", async_get=lambda hass: hass.entities)
     module(
         "homeassistant.helpers.update_coordinator",
         DataUpdateCoordinator=Coordinator,
@@ -247,8 +265,9 @@ def install_ha_doubles():
         HomeAssistantError=HomeAssistantError,
         ConfigEntryAuthFailed=ConfigEntryAuthFailed,
     )
-    return SimpleNamespace(
+    _ha_doubles = SimpleNamespace(
         HomeAssistantError=HomeAssistantError,
         ConfigEntryAuthFailed=ConfigEntryAuthFailed,
         UpdateFailed=UpdateFailed,
     )
+    return _ha_doubles

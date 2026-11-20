@@ -1,15 +1,22 @@
 {
   "domain": "caavo_home",
   "name": "Caavo Home",
-  "codeowners": ["@LavenderFox2430"],
+  "codeowners": [
+    "@LavenderFox2430"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/LavenderFox2430/caavo-home/blob/main/README.md",
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/LavenderFox2430/caavo-home/issues",
   "requirements": [],
-  "version": "0.1.2",
+  "version": "0.2.0",
   "zeroconf": [
-    {"type": "_caavo-home._tcp.local.", "properties": {"api": "1"}}
+    {
+      "type": "_caavo-home._tcp.local.",
+      "properties": {
+        "api": "1"
+      }
+    }
   ]
 }

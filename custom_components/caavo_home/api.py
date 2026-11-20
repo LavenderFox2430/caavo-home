@@ -5,11 +5,14 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 import json
+import re
 import time
+import uuid
 from typing import Any
 
 import aiohttp
 
+from .automation import identifier, job_summary, summarize
 from .const import (
     API_PATH,
     COMMAND_INTERVAL,
@@ -83,6 +86,19 @@ class CaavoClient:
         self._base = f"http://{self.host}:{port}{API_PATH}"
         self._command_lock = asyncio.Lock()
         self._last_command = 0.0
+        self.last_automation_request: str | None = None
+
+    @property
+    def supports_automation(self) -> bool:
+        return (
+            self.capabilities.get("irAutomation") is True
+            and self.capabilities.get("automationVersion") == 1
+        )
+
+    @property
+    def configuration_url(self) -> str:
+        path = "/automation" if self.supports_automation else "/"
+        return f"http://{self.host}:{self.port}{path}"
 
     async def _request(
         self,
@@ -111,7 +127,11 @@ class CaavoClient:
                 if response.status == 403:
                     raise CaavoError("Caavo refused access from this network")
                 if response.status == 409:
-                    raise CaavoError("The Caavo hardware backend is not ready")
+                    raise CaavoError(
+                        "Caavo rejected the automation request; check its current job, learning session and library"
+                        if path.startswith("/automation")
+                        else "The Caavo hardware backend is not ready"
+                    )
                 if response.status == 429:
                     raise CaavoError("Caavo is receiving commands too quickly")
                 if response.status != 200:
@@ -122,7 +142,8 @@ class CaavoClient:
                 chunks = bytearray()
                 while chunk := await response.content.read(16384):
                     chunks.extend(chunk)
-                    if len(chunks) > MAX_RESPONSE_BYTES:
+                    limit = 2097152 if path.startswith("/automation") else MAX_RESPONSE_BYTES
+                    if len(chunks) > limit:
                         raise CaavoProtocolError(
                             "Caavo response was too large", uncertain=is_command
                         )
@@ -238,3 +259,101 @@ class CaavoClient:
         if action == "restart":
             payload["confirm"] = True
         return await self._command("/power", payload)
+
+    async def async_get_automation(self) -> dict[str, Any]:
+        if not self.supports_automation:
+            raise CaavoError("Update Caavo Home to enable theater automation")
+        await self.async_identify()
+        response = await self._request("GET", "/automation", authenticated=True)
+        try:
+            if response.get("ok") is not True:
+                raise ValueError("Missing result")
+            return summarize(response.get("result"))
+        except (ValueError, TypeError, KeyError, AttributeError) as err:
+            raise CaavoProtocolError("Caavo returned invalid automation state") from err
+
+    async def async_get_job(self, request_id: str) -> dict[str, Any]:
+        identifier(request_id)
+        result = await self._command(
+            "/automation", {"action": "job", "args": {"requestId": request_id}}
+        )
+        return self._validate_job(result, request_id)
+
+    @staticmethod
+    def _validate_job(result: dict[str, Any], request_id: str) -> dict[str, Any]:
+        try:
+            job = job_summary(result)
+            if job is None or job["requestId"] != request_id:
+                raise ValueError("Wrong receipt")
+        except (ValueError, TypeError) as err:
+            raise CaavoProtocolError(
+                "Caavo did not confirm the job receipt", uncertain=True
+            ) from err
+        return job
+
+    async def async_run_automation(self, request: dict[str, Any]) -> dict[str, Any]:
+        if not self.supports_automation:
+            raise CaavoError("This Caavo does not support theater automation")
+        kind = request.get("kind")
+        fields = {"kind"}
+        if kind == "command":
+            fields |= {"device", "command"}
+            identifier(request.get("device"))
+            identifier(request.get("command"))
+        elif kind in {"macro", "activity.start"}:
+            fields.add("id")
+            identifier(request.get("id"))
+        elif kind != "activity.stop":
+            raise ValueError("Unsupported theater action")
+        if set(request) != fields:
+            raise ValueError("Unsupported theater action fields")
+        request_id = uuid.uuid4().hex
+        self.last_automation_request = request_id
+        try:
+            result = await self._command(
+                "/automation", {"action": "run", "args": {**request, "requestId": request_id}}
+            )
+            job = self._validate_job(result, request_id)
+        except CaavoError as err:
+            if not err.uncertain:
+                raise
+            # Read the durable receipt once. Never resend 'run', even with the
+            # same ID, and never create a replacement job after an uncertain send.
+            try:
+                job = await self.async_get_job(request_id)
+            except CaavoError as lookup_error:
+                raise CaavoError(
+                    f"Automation outcome unknown. Inspect request {request_id} in Theater before running it again",
+                    uncertain=True,
+                ) from lookup_error
+        if job["status"] in {"failed", "cancelled", "interrupted"}:
+            raise CaavoError(f"Automation {job['status']}; inspect request {request_id} in Theater")
+        return job
+
+    async def async_cancel_automation(self, request_id: str) -> dict[str, Any]:
+        identifier(request_id)
+        return await self._command(
+            "/automation", {"action": "cancel", "args": {"requestId": request_id}}
+        )
+
+
+def network_mac(state: dict[str, Any], host: str) -> str | None:
+    """Use only a MAC reported for the interface serving the configured IP."""
+    network = state.get("network")
+    rows = network.get("interfaces") if isinstance(network, dict) else None
+    if not isinstance(rows, list):
+        return None
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("addresses"), list):
+            continue
+        mac = row.get("mac")
+        if host not in row["addresses"] or not isinstance(mac, str):
+            continue
+        if not re.fullmatch(r"(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}", mac):
+            continue
+        if mac.lower() in {"00:00:00:00:00:00", "ff:ff:ff:ff:ff:ff", "02:00:00:00:00:00"}:
+            continue
+        if int(mac[:2], 16) & 1:
+            continue
+        return mac.lower()
+    return None
