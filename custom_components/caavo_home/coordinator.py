@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import CaavoAuthError, CaavoClient, CaavoError, network_mac
 from .const import DOMAIN, POLL_INTERVAL
+from .selection import AutomationSelection
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class CaavoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.client = client
         self.entry = entry
+        self.selection = AutomationSelection()
         self._capability_version = client.info.get("version")
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -47,6 +49,7 @@ class CaavoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self.client.supports_automation:
                 try:
                     state["automation"] = await self.client.async_get_automation()
+                    self.selection.reconcile(state["automation"])
                     state["automationAvailable"] = True
                 except CaavoAuthError:
                     raise

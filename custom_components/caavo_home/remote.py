@@ -15,6 +15,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 class CaavoRemote(CaavoEntity, RemoteEntity):
     _attr_translation_key = "remote"
+    _attr_icon = "mdi:power"
 
     def __init__(self, coordinator):
         super().__init__(coordinator, "remote")

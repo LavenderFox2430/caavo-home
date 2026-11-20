@@ -32,6 +32,7 @@ METHOD_ARGUMENTS = {
         "async_config_entry_first_refresh": set(),
         "async_request_refresh": set(),
         "async_add_listener": {"update_callback"},
+        "async_update_listeners": set(),
     },
     "homeassistant.helpers.device_registry": {
         "async_get_device": {"identifiers"},

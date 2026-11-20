@@ -56,8 +56,14 @@ def summarize(value: Any) -> dict[str, Any]:
     if library.get("schema") != 1 or type(library.get("revision")) is not int:
         raise ValueError("Unsupported automation library")
     buttons = {}
+    devices = {}
     for device in named_rows(library.get("devices")):
-        for command in named_rows(device.get("commands")):
+        commands = named_rows(device.get("commands"))
+        devices[device["id"]] = {
+            "name": device["name"],
+            "commands": {command["id"]: command["name"] for command in commands},
+        }
+        for command in commands:
             key = ("command", device["id"], command["id"])
             buttons[key] = {
                 "name": f"{device['name']} · {command['name']}",
@@ -87,6 +93,8 @@ def summarize(value: Any) -> dict[str, Any]:
     return {
         "revision": library["revision"],
         "buttons": buttons,
+        "devices": devices,
+        "macros": {row["id"]: row["name"] for row in library["macros"]},
         "activities": activities,
         "activity": active,
         "activityState": runtime.get("activityState", "unknown"),

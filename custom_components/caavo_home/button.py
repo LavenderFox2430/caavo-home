@@ -12,7 +12,7 @@ from .entity import CaavoAutomationEntity, CaavoEntity
 BUTTONS = (
     ("wake", "power", "on", "mdi:power", None),
     ("standby", "power", "off", "mdi:power-standby", None),
-    ("restart", "power", "restart", "mdi:restart", EntityCategory.CONFIG),
+    ("restart", "power", "restart", "mdi:restart", EntityCategory.DIAGNOSTIC),
     ("launcher", "key", "caavo", "mdi:home", None),
     ("play_pause", "key", "play_pause", "mdi:play-pause", None),
     ("mute", "key", "mute", "mdi:volume-mute", None),
@@ -39,7 +39,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
             return
         entities = []
         if not controls_added:
-            entities += [CaavoStopActivity(coordinator), CaavoCancelJob(coordinator)]
+            entities += [
+                CaavoStopActivity(coordinator),
+                CaavoCancelJob(coordinator),
+                CaavoSelectedButton(coordinator, "ir", "ir_send", "mdi:remote"),
+                CaavoSelectedButton(coordinator, "macro", "run_macro", "mdi:playlist-play"),
+            ]
             controls_added = True
         for key in coordinator.data["automation"]["buttons"]:
             if key not in known:
@@ -72,6 +77,10 @@ class CaavoButton(CaavoEntity, ButtonEntity):
 
 class CaavoLibraryButton(CaavoAutomationEntity, ButtonEntity):
     """Stable IDs preserve dashboard references across renames and reloads."""
+
+    # Existing registry preferences are retained on upgrade. New item buttons
+    # are optional shortcuts; selectors are the primary controls.
+    _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator, key):
         super().__init__(coordinator, entity_key(key))
@@ -131,6 +140,33 @@ class CaavoStopActivity(CaavoAutomationEntity, ButtonEntity):
         await self.async_command(
             self.coordinator.client.async_run_automation, {"kind": "activity.stop"}
         )
+
+
+class CaavoSelectedButton(CaavoAutomationEntity, ButtonEntity):
+    """Snapshot the selected IDs before awaiting a command."""
+
+    def __init__(self, coordinator, kind, translation_key, icon):
+        super().__init__(coordinator, f"automation_{translation_key}")
+        self._kind = kind
+        self._attr_translation_key = translation_key
+        self._attr_icon = icon
+
+    @property
+    def available(self):
+        return (
+            super().available
+            and not self.automation.get("busy")
+            and not self.automation.get("learning")
+            and self.coordinator.selection.request(self.automation, self._kind) is not None
+        )
+
+    async def async_press(self):
+        request = self.coordinator.selection.request(self.automation, self._kind)
+        if not self.available or request is None:
+            raise HomeAssistantError(
+                "Choose a current command or macro and wait for Caavo to be ready"
+            )
+        await self.async_command(self.coordinator.client.async_run_automation, request)
 
 
 class CaavoCancelJob(CaavoAutomationEntity, ButtonEntity):

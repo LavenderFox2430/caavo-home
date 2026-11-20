@@ -1,0 +1,53 @@
+# Replace the example entity IDs with the IDs in your own entity registry.
+# Existing installations retain their original remote and button entity IDs.
+title: Caavo
+views:
+  - title: Controls
+    path: controls
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Controls
+            show_header_toggle: false
+            entities:
+              - entity: media_player.caavo_home
+                name: TV Switcher
+              - type: divider
+              - entity: remote.caavo_home_remote
+                name: Caavo power
+                icon: mdi:power
+              - entity: button.caavo_home_caavo_standby
+                name: Caavo standby
+              - entity: button.caavo_home_cancel_theater_job
+                name: Cancel theater job
+              - entity: button.caavo_home_end_theater_activity
+                name: End theater activity
+              - entity: select.caavo_home_hdmi_input
+                name: HDMI input
+              - entity: select.caavo_home_ir_device
+                name: IR device
+              - entity: select.caavo_home_ir_function
+                name: IR function
+              - entity: button.caavo_home_ir_send
+                name: IR send
+              - entity: button.caavo_home_mute_toggle
+                name: Mute toggle
+              - entity: button.caavo_home_open_launcher
+                name: Open launcher
+              - entity: button.caavo_home_play_pause_toggle
+                name: Play/pause toggle
+              - entity: select.caavo_home_theater_activity
+                name: Theater activity
+              - entity: select.caavo_home_macro
+                name: Macro
+              - entity: button.caavo_home_run_macro
+                name: Run macro
+              - entity: button.caavo_home_wake_caavo
+                name: Wake Caavo
+          - type: entities
+            title: Diagnostic
+            show_header_toggle: false
+            entities:
+              - entity: button.caavo_home_restart_caavo
+                name: Restart Caavo

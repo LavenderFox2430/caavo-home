@@ -23,6 +23,10 @@ class ReleaseTests(unittest.TestCase):
                 ignore=shutil.ignore_patterns("__pycache__"),
             )
             (checkout / "tools").mkdir()
+            (checkout / "examples").mkdir()
+            shutil.copy2(
+                ROOT / "examples/caavo-dashboard.yaml", checkout / "examples/caavo-dashboard.yaml"
+            )
             for filename in ("README.md", "LICENSE", "hacs.json", "tools/build_release.py"):
                 shutil.copy2(ROOT / filename, checkout / filename)
 
@@ -47,7 +51,11 @@ class ReleaseTests(unittest.TestCase):
                     path.relative_to(checkout).as_posix()
                     for path in (checkout / "custom_components").rglob("*")
                     if path.is_file()
-                } | {"INSTALL_CAAVO_HOME.md", "LICENSE_CAAVO_HOME.txt"}
+                } | {
+                    "INSTALL_CAAVO_HOME.md",
+                    "LICENSE_CAAVO_HOME.txt",
+                    "examples/caavo-dashboard.yaml",
+                }
                 self.assertEqual(names, expected)
                 self.assertIn("custom_components/caavo_home/manifest.json", names)
                 manifest = json.loads(package.read("custom_components/caavo_home/manifest.json"))

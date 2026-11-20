@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Add IR device and dependent function selectors with a separate IR send button.
+- Add a Macro selector and explicit Run macro button; selection never executes.
+- Rename Remote to Caavo power and move Restart Caavo to Diagnostic.
+- Add a native-card dashboard example with the reviewed control ordering.
+- Make newly discovered library shortcut buttons optional; retain existing registry choices and entity IDs.
+- Keep selections isolated per unit, clear invalid choices, and block sends while unavailable, busy or learning.
+
 ## 0.2.0
 
 - Discover custom IR commands, onboard macros and activity starts as button entities.

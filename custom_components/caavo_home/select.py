@@ -1,4 +1,4 @@
-"""HDMI input selection."""
+"""HDMI/activity control and local IR/macro choices."""
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import callback
@@ -18,7 +18,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
         nonlocal added
         if not added and (entry.runtime_data.data or {}).get("automationAvailable"):
             added = True
-            async_add_entities([CaavoActivitySelect(entry.runtime_data)])
+            async_add_entities(
+                [
+                    CaavoActivitySelect(entry.runtime_data),
+                    CaavoCommandSelect(entry.runtime_data, "ir_device", "mdi:television"),
+                    CaavoCommandSelect(entry.runtime_data, "ir_function", "mdi:remote"),
+                    CaavoCommandSelect(entry.runtime_data, "macro", "mdi:format-list-numbered"),
+                ]
+            )
 
     discover()
     entry.async_on_unload(entry.runtime_data.async_add_listener(discover))
@@ -77,3 +84,35 @@ class CaavoActivitySelect(CaavoAutomationEntity, SelectEntity):
         key = options[option]
         request = {"kind": "activity.start", "id": key} if key else {"kind": "activity.stop"}
         await self.async_command(self.coordinator.client.async_run_automation, request)
+
+
+class CaavoCommandSelect(CaavoAutomationEntity, SelectEntity):
+    """Choose locally; only the separate send/run button executes anything."""
+
+    def __init__(self, coordinator, kind, icon):
+        super().__init__(coordinator, f"automation_select_{kind}")
+        self._kind = kind
+        self._attr_translation_key = kind
+        self._attr_icon = icon
+
+    @property
+    def options(self):
+        return list(self.coordinator.selection.options(self.automation, self._kind))
+
+    @property
+    def current_option(self):
+        return self.coordinator.selection.current_option(self.automation, self._kind)
+
+    @property
+    def available(self):
+        return super().available and bool(self.options)
+
+    async def async_select_option(self, option):
+        if not self.available:
+            raise HomeAssistantError("No current choices are available")
+        try:
+            self.coordinator.selection.select(self.automation, self._kind, option)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+        # Notify the dependent selector and button, without polling or executing.
+        self.coordinator.async_update_listeners()

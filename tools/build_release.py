@@ -69,6 +69,7 @@ def main() -> None:
     entries += [
         ("INSTALL_CAAVO_HOME.md", (ROOT / "README.md").read_bytes()),
         ("LICENSE_CAAVO_HOME.txt", (ROOT / "LICENSE").read_bytes()),
+        ("examples/caavo-dashboard.yaml", (ROOT / "examples/caavo-dashboard.yaml").read_bytes()),
     ]
     with zipfile.ZipFile(
         archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9

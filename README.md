@@ -6,7 +6,7 @@
 
 Local control of a Caavo running the replacement **Caavo Home launcher with API v1**. This is an independent custom integration; it does not connect to the original Caavo cloud service.
 
-Version **0.2.0**. Requires Home Assistant Core **2026.11.2 or later**. Adds custom IR command buttons, macro buttons, activity start buttons and a theater activity selector, plus the device's WebUI link, IP/MAC sensors and theater job status. Theater controls require Caavo Home 2.2 with companion 1.7 or later. Older API v1 devices retain their existing controls. MAC information is available when the companion includes network metadata; absent metadata does not block the integration.
+Version **0.3.0**. Requires Home Assistant Core **2026.11.2 or later**. Adds dependent IR device/function selectors with explicit sending, a macro selector with a separate run button, and a theater activity selector, plus the device's WebUI link, IP/MAC sensors and theater job status. Theater controls require Caavo Home 2.2 with companion 1.7 or later. Older API v1 devices retain their existing controls. MAC information is available when the companion includes network metadata; absent metadata does not block the integration.
 
 ## Install through Marketplace / HACS
 
@@ -29,7 +29,7 @@ The repository can be added by URL; it is not listed in the default catalog.
 
 ## Install the ZIP manually
 
-1. Download `caavo_home-0.2.0.zip` from the [0.2.0 release](https://github.com/LavenderFox2430/caavo-home/releases/tag/v0.2.0), or build it with `python tools/build_release.py`. A SHA-256 checksum is provided with the release.
+1. Build `caavo_home-0.3.0.zip` with `python tools/build_release.py`; its SHA-256 checksum is written beside it. Published versions are available on the [releases page](https://github.com/LavenderFox2430/caavo-home/releases).
 2. Extract it into your Home Assistant **configuration directory**, usually `/config`. The resulting file must be `/config/custom_components/caavo_home/manifest.json`. Avoid an extra nested `caavo_home-0.2.0` directory. Back up an existing `custom_components/caavo_home` folder outside `custom_components` before replacing it.
 3. Restart Home Assistant.
 4. Open **Settings → Devices & services**. Configure the discovered **Caavo Home** device, or choose **Add integration → Caavo Home**.
@@ -38,7 +38,7 @@ The repository can be added by URL; it is not listed in the default catalog.
 
 The API runs at `http://<Caavo IPv4>:8090/api/v1`. Each unit has its own stable ID and API key. Nothing in this integration assumes a particular unit, address, SSH account, or token.
 
-**Upgrading from 0.1.x:** overwrite the files in the existing `custom_components/caavo_home` folder with this ZIP, verify that its `manifest.json` says `0.2.0`, and fully restart Home Assistant. A browser refresh or integration reload alone may keep an old module cached. Existing entry IDs, device IDs, entity IDs, and saved credentials are unchanged; there is no need to delete an existing integration entry.
+**Upgrading from 0.1.x or 0.2.x:** overwrite the files in the existing `custom_components/caavo_home` folder with this ZIP, verify that its `manifest.json` says `0.3.0`, and fully restart Home Assistant. A browser refresh or integration reload alone may keep an old module cached. Existing entry IDs, device IDs, entity IDs, and saved credentials are unchanged; there is no need to delete an existing integration entry.
 
 Removing this integration only removes its Home Assistant connection. It does not change the Caavo's power, input, configuration, or API key.
 
@@ -57,6 +57,39 @@ theater-capable Caavo, or the normal remote on older companions. Home Assistant
 controls the label and placement of this link. The MAC is also registered as a
 network connection; IP and MAC diagnostic entities can be placed on dashboards.
 No API key is included in a link. Theater asks for the owner key separately.
+
+### Compact controls and dashboard
+
+Choose **IR device**, then **IR function**, then press **IR send**. The function
+list contains only commands saved for that device. Choose a **Macro**, then
+press **Run macro**. Changing any of these three selectors only changes a local
+choice; it never sends IR or starts a macro. Send/run stays unavailable until
+a valid choice exists and the backend is ready, idle and not learning.
+
+Changing devices clears the selected function. Names can change without losing
+the selected stable ID; duplicate names are disambiguated with IDs. A deleted
+choice is cleared after the next successful poll. Choices are separate for each
+Caavo, shared by users of that integration entry, and reset after an integration
+reload or Home Assistant restart. Automations that need an atomic device/command
+target should continue using individual shortcut buttons rather than racing the
+shared selectors. No action runs automatically after recovery or restart.
+
+The **Caavo power** toggle is the existing remote entity: On wakes the Caavo and
+Off requests standby. It still supports `remote.send_command`; its entity ID is
+unchanged. **Restart Caavo** is now in **Diagnostic**.
+
+Home Assistant sorts its device page alphabetically. For the reviewed layout
+with **Theater activity → Macro → Run macro**, use the native-card
+[dashboard example](examples/caavo-dashboard.yaml). Replace its example entity
+IDs with your actual IDs and paste it into a new dashboard using the raw
+configuration editor. No custom frontend cards are required. An existing remote
+entity keeps its old ID even though its display name is now Caavo power.
+
+New individual command, macro and activity-start shortcut buttons are disabled
+by default and can be enabled in the entity settings. Existing shortcuts keep
+their enabled state and IDs on upgrade so automations keep working. The compact
+dashboard omits those shortcuts; disabling an existing one is optional and should
+be done only after checking its automation/dashboard references.
 
 ### Theater controls
 

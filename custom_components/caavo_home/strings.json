@@ -59,11 +59,20 @@
       },
       "activity": {
         "name": "Theater activity"
+      },
+      "ir_device": {
+        "name": "IR device"
+      },
+      "ir_function": {
+        "name": "IR function"
+      },
+      "macro": {
+        "name": "Macro"
       }
     },
     "remote": {
       "remote": {
-        "name": "Remote"
+        "name": "Caavo power"
       }
     },
     "button": {
@@ -90,6 +99,12 @@
       },
       "cancel_automation": {
         "name": "Cancel theater job"
+      },
+      "ir_send": {
+        "name": "IR send"
+      },
+      "run_macro": {
+        "name": "Run macro"
       }
     },
     "binary_sensor": {
