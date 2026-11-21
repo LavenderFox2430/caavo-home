@@ -1,4 +1,4 @@
-"""Reported power, HDMI signal, and optional CPU temperature diagnostics."""
+"""Reported power, HDMI signal, network, and temperature diagnostics."""
 
 from math import isfinite
 
@@ -6,6 +6,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, Sen
 from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import callback
 
+from .api import network_connection
 from .const import POWER_STATES, SIGNAL_STATES
 from .entity import CaavoAutomationEntity, CaavoEntity
 
@@ -18,6 +19,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             CaavoTemperatureSensor(coordinator),
             CaavoAddressSensor(coordinator, "ip_address"),
             CaavoAddressSensor(coordinator, "mac_address"),
+            CaavoNetworkConnectionSensor(coordinator),
+            CaavoSignalSensor(coordinator),
             *(CaavoSignalSensor(coordinator, port) for port in range(1, 5)),
         ]
     )
@@ -52,6 +55,25 @@ class CaavoAddressSensor(CaavoEntity, SensorEntity):
         if self._kind == "ip_address":
             return self.coordinator.client.host
         return (self.coordinator.data or {}).get("macAddress")
+
+
+class CaavoNetworkConnectionSensor(CaavoEntity, SensorEntity):
+    _attr_translation_key = "network_connection"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["ethernet", "wifi", "other"]
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:network-outline"
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "network_connection")
+
+    @property
+    def available(self):
+        return self.coordinator.last_update_success and self.native_value is not None
+
+    @property
+    def native_value(self):
+        return network_connection(self.coordinator.data or {}, self.coordinator.client.host)
 
 
 class CaavoJobSensor(CaavoAutomationEntity, SensorEntity):
@@ -101,19 +123,24 @@ class CaavoSignalSensor(CaavoEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = list(SIGNAL_STATES)
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:video-input-hdmi"
 
-    def __init__(self, coordinator, port):
-        super().__init__(coordinator, f"input_{port}_signal")
+    def __init__(self, coordinator, port=None):
+        key = "active_input_signal" if port is None else f"input_{port}_signal"
+        super().__init__(coordinator, key)
         self._port = port
-        self._attr_translation_key = "input_signal"
-        self._attr_translation_placeholders = {"port": str(port)}
+        self._attr_translation_key = "active_input_signal"
+        if port is not None:
+            self._attr_entity_registry_enabled_default = False
+            self._attr_translation_key = "input_signal"
+            self._attr_translation_placeholders = {"port": str(port)}
 
     @property
     def native_value(self):
-        for item in (self.coordinator.data or {}).get("inputs", []):
-            if item["port"] == self._port:
+        state = self.coordinator.data or {}
+        port = self._port if self._port is not None else state.get("activeInput")
+        for item in state.get("inputs", []):
+            if item["port"] == port:
                 return item["signal"]
         return "unknown"
 

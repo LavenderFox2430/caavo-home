@@ -6,7 +6,7 @@
 
 Local control of a Caavo running the replacement **Caavo Home launcher with API v1**. This is an independent custom integration; it does not connect to the original Caavo cloud service.
 
-Version **0.3.0**. Requires Home Assistant Core **2026.11.2 or later**. Adds dependent IR device/function selectors with explicit sending, a macro selector with a separate run button, and a theater activity selector, plus the device's WebUI link, IP/MAC sensors and theater job status. Theater controls require Caavo Home 2.2 with companion 1.7 or later. Older API v1 devices retain their existing controls. MAC information is available when the companion includes network metadata; absent metadata does not block the integration.
+Version **0.4.0** requires Home Assistant Core **2026.11.2 or later**. The example dashboard includes a Remote view for the keys supported by companion 1.17. The integration also reports the active HDMI signal and the network connection serving Home Assistant. Theater controls require Caavo Home 2.2 with companion 1.7 or later. Older API v1 devices retain their existing controls.
 
 ## Install through Marketplace / HACS
 
@@ -29,8 +29,8 @@ The repository can be added by URL; it is not listed in the default catalog.
 
 ## Install the ZIP manually
 
-1. Build `caavo_home-0.3.0.zip` with `python tools/build_release.py`; its SHA-256 checksum is written beside it. Published versions are available on the [releases page](https://github.com/LavenderFox2430/caavo-home/releases).
-2. Extract it into your Home Assistant **configuration directory**, usually `/config`. The resulting file must be `/config/custom_components/caavo_home/manifest.json`. Avoid an extra nested `caavo_home-0.2.0` directory. Back up an existing `custom_components/caavo_home` folder outside `custom_components` before replacing it.
+1. Build `caavo_home-0.4.0.zip` with `python tools/build_release.py`. Its SHA-256 checksum is written beside it. Published versions are available on the [releases page](https://github.com/LavenderFox2430/caavo-home/releases).
+2. Extract it into your Home Assistant **configuration directory**, usually `/config`. The resulting file must be `/config/custom_components/caavo_home/manifest.json`. Back up an existing `custom_components/caavo_home` folder outside `custom_components` before replacing it.
 3. Restart Home Assistant.
 4. Open **Settings → Devices & services**. Configure the discovered **Caavo Home** device, or choose **Add integration → Caavo Home**.
 5. Enter the API key shown in the Caavo's on-TV **Integration settings**. Manual setup also asks for the unit's private IPv4 address, without `http://`, a port, or a path.
@@ -38,7 +38,9 @@ The repository can be added by URL; it is not listed in the default catalog.
 
 The API runs at `http://<Caavo IPv4>:8090/api/v1`. Each unit has its own stable ID and API key. Nothing in this integration assumes a particular unit, address, SSH account, or token.
 
-**Upgrading from 0.1.x or 0.2.x:** overwrite the files in the existing `custom_components/caavo_home` folder with this ZIP, verify that its `manifest.json` says `0.3.0`, and fully restart Home Assistant. A browser refresh or integration reload alone may keep an old module cached. Existing entry IDs, device IDs, entity IDs, and saved credentials are unchanged; there is no need to delete an existing integration entry.
+**Upgrading an existing install**
+
+Update Caavo Home through Marketplace or overwrite the files in the existing `custom_components/caavo_home` folder with this ZIP. Verify that its `manifest.json` says `0.4.0` and fully restart Home Assistant. Keep your existing integration entry, which contains your connection details and is linked to your entities. If you already use the example dashboard, copy the Remote view and any new diagnostic rows into your dashboard separately.
 
 Removing this integration only removes its Home Assistant connection. It does not change the Caavo's power, input, configuration, or API key.
 
@@ -84,6 +86,21 @@ with **Theater activity → Macro → Run macro**, use the native-card
 IDs with your actual IDs and paste it into a new dashboard using the raw
 configuration editor. No custom frontend cards are required. An existing remote
 entity keeps its old ID even though its display name is now Caavo power.
+
+Open the example's **Remote** view for directional controls, source Home, Caavo
+Home, volume, playback, paging and number keys. The buttons use the existing
+`remote.send_command` action, with HDMI selection and explicit power state
+provided by their existing entities. If your companion exposes fewer keys, use
+the remote entity's `supported_commands` attribute to choose which buttons to keep.
+
+The **Controls** view groups HDMI selection and signal under **Switching inputs**.
+**CEC controls** exposes Caavo wake and standby, which use its configured HDMI-CEC
+power behavior. **Theater Actions** contains activity and manual IR controls, and
+**Macros** contains the selection and explicit run controls. **Theater job** shows
+the current or most recent reported job and offers cancellation while a job is
+running. The history card shows states recorded by Home Assistant. The Caavo
+Theater page still holds the full job receipts. **System status** shows backend
+readiness, CPU temperature and connection information.
 
 New individual command, macro and activity-start shortcut buttons are disabled
 by default and can be enabled in the entity settings. Existing shortcuts keep
@@ -146,10 +163,12 @@ are not copied into Home Assistant entity state or diagnostic downloads.
 | Play/pause toggle / Mute toggle | Sends a toggle; no playback or mute state is invented. |
 | Hardware backend ready | Diagnostic status even when hardware-control entities are unavailable. |
 | Caavo power state | `on`, `off`, `transitioning`, or `unknown`. |
+| Active HDMI signal | Tracks the signal reported for the selected HDMI port. Reports `unknown` when the API has no active port or matching signal. |
+| Network connection | Ethernet, Wi-Fi, or Other for the interface reporting Home Assistant's configured Caavo IP. Requires optional network metadata from companion 1.8.1 or later. |
 | CPU temperature | Read-only average of CPU0–CPU3, reported in °C with measurement history. Unavailable when the API omits the optional reading. |
 | HDMI 1–4 signal | Optional diagnostics, disabled by default in the entity registry. |
 
-**Caavo standby is box/HDMI-system standby. It does not promise to turn off every connected TV, AVR, or source.** Source switching opens the launcher's HDMI viewing screen. The API does not provide content metadata, a reliable playback state, absolute volume, or mute state, so those capabilities are not advertised. Volume, playback, and source commands depend on the launcher's configured device-control support.
+**Caavo standby controls the box and may also reach connected equipment via HDMI-CEC.** On systems with the activated output power policy, each output role's **Follow Caavo Power** preference governs its automatic wake and standby behavior. Home Assistant reports the box's power state. Source switching opens the launcher's HDMI viewing screen. Volume, playback, and source commands depend on the launcher's configured device-control support.
 
 The integration polls every 10 seconds. A reachable API with `available=false` keeps the diagnostic backend status visible while hardware controls are unavailable. There is no event subscription in API v1.
 

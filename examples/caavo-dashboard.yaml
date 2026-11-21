@@ -8,46 +8,370 @@ views:
       - type: vertical-stack
         cards:
           - type: entities
-            title: Controls
+            title: Switching inputs
             show_header_toggle: false
             entities:
-              - entity: media_player.caavo_home
-                name: TV Switcher
+              - entity: select.caavo_home_hdmi_input
+              - entity: sensor.caavo_home_active_hdmi_signal
+          - type: entities
+            title: CEC controls
+            show_header_toggle: false
+            entities:
+              - entity: button.caavo_home_wake_caavo
+                name: Wake Caavo (CEC when configured)
+              - entity: button.caavo_home_caavo_standby
+                name: Caavo standby (CEC when configured)
+              - entity: sensor.caavo_home_caavo_power_state
+          - type: entities
+            title: Theater Actions
+            show_header_toggle: false
+            entities:
+              - entity: select.caavo_home_theater_activity
+              - entity: button.caavo_home_end_theater_activity
               - type: divider
+              - entity: select.caavo_home_ir_device
+              - entity: select.caavo_home_ir_function
+              - entity: button.caavo_home_ir_send
+          - type: entities
+            title: Macros
+            show_header_toggle: false
+            entities:
+              - entity: select.caavo_home_macro
+              - entity: button.caavo_home_run_macro
+          - type: entities
+            title: Theater job
+            show_header_toggle: false
+            entities:
+              - entity: sensor.caavo_home_theater_job
+              - entity: button.caavo_home_cancel_theater_job
+          - type: entities
+            title: System status
+            show_header_toggle: false
+            entities:
+              - entity: binary_sensor.caavo_home_hardware_backend_ready
+              - entity: sensor.caavo_home_cpu_temperature
+              - entity: sensor.caavo_home_network_connection
+              - entity: sensor.caavo_home_ip_address
+              - entity: button.caavo_home_restart_caavo
+          - type: history-graph
+            title: Theater job history
+            hours_to_show: 6
+            entities:
+              - entity: sensor.caavo_home_theater_job
+  - title: Remote
+    path: remote
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            show_header_toggle: false
+            entities:
               - entity: remote.caavo_home_remote
                 name: Caavo power
-                icon: mdi:power
-              - entity: button.caavo_home_caavo_standby
-                name: Caavo standby
-              - entity: button.caavo_home_cancel_theater_job
-                name: Cancel theater job
-              - entity: button.caavo_home_end_theater_activity
-                name: End theater activity
               - entity: select.caavo_home_hdmi_input
                 name: HDMI input
-              - entity: select.caavo_home_ir_device
-                name: IR device
-              - entity: select.caavo_home_ir_function
-                name: IR function
-              - entity: button.caavo_home_ir_send
-                name: IR send
-              - entity: button.caavo_home_mute_toggle
-                name: Mute toggle
-              - entity: button.caavo_home_open_launcher
-                name: Open launcher
-              - entity: button.caavo_home_play_pause_toggle
-                name: Play/pause toggle
-              - entity: select.caavo_home_theater_activity
-                name: Theater activity
-              - entity: select.caavo_home_macro
-                name: Macro
-              - entity: button.caavo_home_run_macro
-                name: Run macro
-              - entity: button.caavo_home_wake_caavo
-                name: Wake Caavo
-          - type: entities
-            title: Diagnostic
-            show_header_toggle: false
-            entities:
-              - entity: button.caavo_home_restart_caavo
-                name: Restart Caavo
+          - type: grid
+            title: Navigation
+            columns: 3
+            square: false
+            cards:
+              - type: button
+                name: Back
+                icon: mdi:arrow-left
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: back
+              - type: button
+                name: Up
+                icon: mdi:chevron-up
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: up
+              - type: button
+                name: Menu
+                icon: mdi:menu
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: menu
+              - type: button
+                name: Left
+                icon: mdi:chevron-left
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: left
+              - type: button
+                name: OK
+                icon: mdi:circle-outline
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: select
+              - type: button
+                name: Right
+                icon: mdi:chevron-right
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: right
+              - type: button
+                name: Caavo Home
+                icon: mdi:home-variant
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: caavo
+              - type: button
+                name: Down
+                icon: mdi:chevron-down
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: down
+              - type: button
+                name: Source Home
+                icon: mdi:home
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: home
+          - type: grid
+            title: Volume
+            columns: 3
+            square: false
+            cards:
+              - type: button
+                name: Volume down
+                icon: mdi:volume-minus
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: volume_down
+              - type: button
+                name: Mute
+                icon: mdi:volume-mute
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: mute
+              - type: button
+                name: Volume up
+                icon: mdi:volume-plus
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: volume_up
+          - type: grid
+            title: Playback
+            columns: 3
+            square: false
+            cards:
+              - type: button
+                name: Rewind
+                icon: mdi:rewind
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: rewind
+              - type: button
+                name: Play/pause
+                icon: mdi:play-pause
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: play_pause
+              - type: button
+                name: Fast forward
+                icon: mdi:fast-forward
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: forward
+          - type: grid
+            title: Paging and keypad
+            columns: 3
+            square: false
+            cards:
+              - type: button
+                name: Page down
+                icon: mdi:chevron-double-down
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: page_down
+              - type: button
+                name: Keypad
+                icon: mdi:dialpad
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: keypad
+              - type: button
+                name: Page up
+                icon: mdi:chevron-double-up
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: page_up
+          - type: grid
+            title: Number keys
+            columns: 5
+            square: false
+            cards:
+              - type: button
+                name: "1"
+                icon: mdi:numeric-1
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_1
+              - type: button
+                name: "2"
+                icon: mdi:numeric-2
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_2
+              - type: button
+                name: "3"
+                icon: mdi:numeric-3
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_3
+              - type: button
+                name: "4"
+                icon: mdi:numeric-4
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_4
+              - type: button
+                name: "5"
+                icon: mdi:numeric-5
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_5
+              - type: button
+                name: "6"
+                icon: mdi:numeric-6
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_6
+              - type: button
+                name: "7"
+                icon: mdi:numeric-7
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_7
+              - type: button
+                name: "8"
+                icon: mdi:numeric-8
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_8
+              - type: button
+                name: "9"
+                icon: mdi:numeric-9
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_9
+              - type: button
+                name: "0"
+                icon: mdi:numeric-0
+                tap_action:
+                  action: perform-action
+                  perform_action: remote.send_command
+                  target:
+                    entity_id: remote.caavo_home_remote
+                  data:
+                    command: num_0

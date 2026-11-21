@@ -35,8 +35,8 @@ METHOD_ARGUMENTS = {
         "async_update_listeners": set(),
     },
     "homeassistant.helpers.device_registry": {
-        "async_get_device": {"identifiers"},
-        "async_update_device": {"configuration_url", "sw_version", "merge_connections"},
+        "async_get_device_by_identifier": {"identifier", "config_entry_id"},
+        "async_update_device": {"configuration_url", "sw_version", "new_connections"},
     },
     "homeassistant.helpers.entity_registry": {
         "async_update_entity": {"original_name"},

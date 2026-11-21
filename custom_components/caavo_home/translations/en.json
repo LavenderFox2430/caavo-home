@@ -134,6 +134,23 @@
           "unknown": "Unknown"
         }
       },
+      "active_input_signal": {
+        "name": "Active HDMI signal",
+        "state": {
+          "connected": "Connected",
+          "standby": "Standby",
+          "disconnected": "Disconnected",
+          "unknown": "Unknown"
+        }
+      },
+      "network_connection": {
+        "name": "Network connection",
+        "state": {
+          "ethernet": "Ethernet",
+          "wifi": "Wi-Fi",
+          "other": "Other"
+        }
+      },
       "ip_address": {
         "name": "IP address"
       },

@@ -66,14 +66,18 @@ class CaavoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _update_device(self, state: dict[str, Any]) -> None:
         registry = async_get(self.hass)
-        device = registry.async_get_device(identifiers={(DOMAIN, str(self.client.device_id))})
+        device = registry.async_get_device_by_identifier(
+            (DOMAIN, str(self.client.device_id)), self.entry.entry_id
+        )
         if device:
             values = {
                 "configuration_url": self.client.configuration_url,
                 "sw_version": self.client.info.get("version"),
             }
             if state.get("macAddress"):
-                values["merge_connections"] = {(CONNECTION_NETWORK_MAC, state["macAddress"])}
+                values["new_connections"] = device.connections | {
+                    (CONNECTION_NETWORK_MAC, state["macAddress"])
+                }
             registry.async_update_device(device.id, **values)
 
 

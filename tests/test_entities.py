@@ -9,6 +9,7 @@ errors = install_ha_doubles()
 coordinator_module = component("coordinator")
 entity_module = component("entity")
 remote_module = component("remote")
+sensor_module = component("sensor")
 api = component("api")
 
 
@@ -37,6 +38,57 @@ class EntityTests(unittest.TestCase):
         coordinator.last_update_success = False
         self.assertFalse(entity.available)
         self.assertEqual(entity._attr_unique_id, INFO["id"] + "_test")
+
+    def test_active_signal_follows_selected_port_without_changing_per_port_entity(self):
+        coordinator = SimpleNamespace(
+            data={
+                **STATE,
+                "inputs": [
+                    {"port": 1, "signal": "connected"},
+                    {"port": 2, "signal": "standby"},
+                ],
+            },
+            last_update_success=True,
+            client=SimpleNamespace(device_id=INFO["id"], info=INFO),
+        )
+        active = sensor_module.CaavoSignalSensor(coordinator)
+        first = sensor_module.CaavoSignalSensor(coordinator, 1)
+        self.assertEqual(first._attr_unique_id, INFO["id"] + "_input_1_signal")
+        self.assertFalse(first._attr_entity_registry_enabled_default)
+        self.assertEqual(first.native_value, "connected")
+        self.assertEqual(active.native_value, "standby")
+        coordinator.data["activeInput"] = 1
+        self.assertEqual(active.native_value, "connected")
+        for missing in (4, None):
+            coordinator.data["activeInput"] = missing
+            self.assertEqual(active.native_value, "unknown")
+        coordinator.last_update_success = False
+        self.assertFalse(active.available)
+
+    def test_network_connection_uses_interface_for_configured_ipv4(self):
+        eth = {"interface": "eth0", "addresses": ["192.168.1.40"], "mac": None}
+        wifi = {"interface": "wlan0", "addresses": ["192.168.1.41"], "mac": None}
+        network = {"interfaces": [eth, wifi, {"addresses": "192.168.1.40"}]}
+        coordinator = SimpleNamespace(
+            data={**STATE, "network": network, "available": False},
+            last_update_success=True,
+            client=SimpleNamespace(device_id=INFO["id"], info=INFO, host="192.168.1.40"),
+        )
+        connection = sensor_module.CaavoNetworkConnectionSensor(coordinator)
+        self.assertTrue(connection.available)
+        self.assertEqual(connection.native_value, "ethernet")
+        coordinator.client.host = "192.168.1.41"
+        self.assertEqual(connection.native_value, "wifi")
+        wifi["interface"] = "br0"
+        self.assertEqual(connection.native_value, "other")
+        network["interfaces"].append({"interface": "eth1", "addresses": ["192.168.1.41"]})
+        self.assertFalse(connection.available)
+        coordinator.data.pop("network")
+        self.assertFalse(connection.available)
+        coordinator.data["network"] = network
+        coordinator.client.host = "192.168.1.40"
+        coordinator.last_update_success = False
+        self.assertFalse(connection.available)
 
 
 class SequenceTests(unittest.IsolatedAsyncioTestCase):

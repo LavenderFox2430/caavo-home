@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Add a native dashboard Remote view for the 28 companion API 1.17 remote keys, HDMI selection, and Caavo power.
+- Group HDMI switching, CEC power, Theater actions, macro execution, job history, and system status in the native Controls view.
+- Report the active HDMI port's signal and the connection interface serving Home Assistant's configured Caavo address.
+- Derive both diagnostics from the existing state poll and keep older companions, saved credentials, and entity IDs compatible.
+- Update Home Assistant device metadata through the current config-entry-specific registry APIs.
+- Document launcher Home, source Home, and current HDMI-CEC power behavior.
+
 ## 0.3.0
 
 - Add IR device and dependent function selectors with a separate IR send button.

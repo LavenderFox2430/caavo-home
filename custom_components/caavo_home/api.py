@@ -8,6 +8,7 @@ import json
 import re
 import time
 import uuid
+from collections.abc import Iterator
 from typing import Any
 
 import aiohttp
@@ -337,17 +338,22 @@ class CaavoClient:
         )
 
 
-def network_mac(state: dict[str, Any], host: str) -> str | None:
-    """Use only a MAC reported for the interface serving the configured IP."""
+def _matching_network_interfaces(state: dict[str, Any], host: str) -> Iterator[dict[str, Any]]:
     network = state.get("network")
     rows = network.get("interfaces") if isinstance(network, dict) else None
     if not isinstance(rows, list):
-        return None
+        return
     for row in rows:
-        if not isinstance(row, dict) or not isinstance(row.get("addresses"), list):
-            continue
+        if isinstance(row, dict) and isinstance(row.get("addresses"), list):
+            if host in row["addresses"]:
+                yield row
+
+
+def network_mac(state: dict[str, Any], host: str) -> str | None:
+    """Use only a MAC reported for the interface serving the configured IP."""
+    for row in _matching_network_interfaces(state, host):
         mac = row.get("mac")
-        if host not in row["addresses"] or not isinstance(mac, str):
+        if not isinstance(mac, str):
             continue
         if not re.fullmatch(r"(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}", mac):
             continue
@@ -357,3 +363,20 @@ def network_mac(state: dict[str, Any], host: str) -> str | None:
             continue
         return mac.lower()
     return None
+
+
+def network_connection(state: dict[str, Any], host: str) -> str | None:
+    """Describe the host's reported interface without guessing the default route."""
+    names = {
+        name
+        for row in _matching_network_interfaces(state, host)
+        if isinstance(name := row.get("interface"), str) and name.strip()
+    }
+    if len(names) != 1:
+        return None
+    name = names.pop()
+    if re.fullmatch(r"eth[0-9]+", name):
+        return "ethernet"
+    if re.fullmatch(r"wlan[0-9]+", name):
+        return "wifi"
+    return "other"

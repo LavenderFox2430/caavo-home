@@ -1,3 +1,4 @@
 aiohttp>=3.9,<4
 probatio==0.13.0
+PyYAML>=6,<7
 ruff>=0.8
